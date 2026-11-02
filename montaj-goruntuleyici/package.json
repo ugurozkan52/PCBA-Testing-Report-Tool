@@ -1,0 +1,79 @@
+{
+  "name": "montaj-gorunteleyici",
+  "productName": "Montaj Görüntüleyici",
+  "version": "7.1.0",
+  "description": "IPC-2581 + BOM tabanlı interaktif montaj (dizgi) takip uygulaması",
+  "main": "src/main/main.js",
+  "author": "Uğur",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "test": "node test/run_tests.js test/data",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux",
+    "dist:mac": "electron-builder --mac",
+    "build:web": "node web/build.js",
+    "test:web": "node web/build.js && node test/e2e_web.js"
+  },
+  "dependencies": {
+    "occt-import-js": "0.0.23",
+    "xlsx": "0.18.5"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8",
+    "esbuild": "^0.24.0",
+    "path-browserify": "^1.0.1",
+    "pdfmake": "^0.2.15",
+    "three": "^0.147.0"
+  },
+  "build": {
+    "appId": "com.anova.montajgoruntuleyici",
+    "productName": "Montaj Görüntüleyici",
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "dir",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "artifactName": "MontajGoruntuleyici-${version}-setup.exe"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Development",
+      "icon": "build/icon.png"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.developer-tools",
+      "icon": "build/icon.png"
+    },
+    "compression": "maximum",
+    "asarUnpack": [
+      "node_modules/occt-import-js/**"
+    ]
+  }
+}

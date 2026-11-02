@@ -1,0 +1,5 @@
+/* DejaVu Sans / DejaVu Sans Condensed — Bitstream Vera Fonts licence + public domain changes (see LICENSE-DejaVu.txt) */
+@font-face { font-family: 'DejaVu Sans'; font-weight: 400; font-style: normal; src: url('DejaVuSans.ttf') format('truetype'); }
+@font-face { font-family: 'DejaVu Sans'; font-weight: 600 700; font-style: normal; src: url('DejaVuSans-Bold.ttf') format('truetype'); }
+@font-face { font-family: 'DejaVu Sans Condensed'; font-weight: 400; font-style: normal; src: url('DejaVuSansCondensed.ttf') format('truetype'); }
+@font-face { font-family: 'DejaVu Sans Condensed'; font-weight: 600 700; font-style: normal; src: url('DejaVuSansCondensed-Bold.ttf') format('truetype'); }

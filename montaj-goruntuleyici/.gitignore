@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist-web/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+# third-party IPC-2581 test case (not redistributable here): keep it locally for the tests
+test/data/ipc/testcase3*.xml
+test/data/step/testcase3*.step

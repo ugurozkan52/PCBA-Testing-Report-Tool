@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;">
+  <title>Montaj Görüntüleyici</title>
+  <link rel="stylesheet" href="../fonts/fonts.css">
+  <link rel="stylesheet" href="ibom/ibom.css">
+  <link rel="stylesheet" href="viewer.css">
+  <script src="ibom/split.js"></script>
+  <script src="ibom/pep.js"></script>
+  <script src="../../i18n/i18n.js"></script>
+  <script src="viewer-pre.js"></script>
+  <script src="ibom/util.js"></script>
+  <script src="ibom/render.js"></script>
+  <script src="ibom/table-util.js"></script>
+  <script src="ibom/ibom.js"></script>
+  <script src="viewer-a11y.js"></script>
+  <script src="../../core/testplan.js"></script>
+  <script src="viewer-bridge.js"></script>
+  <script src="viewer-test.js"></script>
+  <script src="lib/three.min.js"></script>
+  <script src="lib/OrbitControls.js"></script>
+  <script src="lib/RoomEnvironment.js"></script>
+  <script src="viewer-3d.js"></script>
+</head>
+
+<body>
+<div id="topmostdiv" class="topmostdiv">
+  <div id="top">
+    <div id="fileinfodiv" class="asm-job">
+      <table class="fileinfo" hidden>
+        <tbody>
+          <tr>
+            <td id="board-info">
+              <div id="title" class="title metadata-field">Title</div>
+              <div id="company" class="metadata-field">Company</div>
+            </td>
+            <td id="revision-info">
+              <div id="revision" class="title metadata-field">Revision</div>
+              <div id="filedate" class="metadata-field">Date</div>
+            </td>
+            <td id="variant" class="title metadata-field" hidden></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="job-head"><h1 id="asm-proj" class="job-proj"></h1><span id="asm-rev" class="job-rev"></span></div>
+      <div class="job-grid">
+        <div class="job-cell"><span class="job-k">Seri No</span><b id="asm-serial" class="job-sn">-</b></div>
+        <div class="job-cell"><span class="job-k">Teknisyen</span><button class="asm-operator" id="asm-operator-btn" title="Teknisyeni değiştir"><span id="asm-operator">-</span> <span class="asm-edit" aria-hidden="true">✎</span></button></div>
+        <div class="job-cell job-prog"><div class="asm-progress" id="asm-progress"></div></div>
+      </div>
+    </div>
+    <nav class="asm-nav" id="asm-session">
+      <button class="asm-btn" id="asm-home" title="Projelere dön (Ctrl+H)">Projeler</button>
+      <button class="asm-btn" id="asm-board-btn" title="Başka kart (seri no) seç">Kart değiştir</button>
+      <button class="asm-btn" id="asm-log-btn" title="Montaj kaydı">Kayıt</button>
+      <button class="asm-btn" id="asm-about-btn" title="Kullanım kılavuzu ve lisanslar">Hakkında</button>
+    </nav>
+    <div id="bomcontrols">
+      <div class="hideonprint menu">
+        <button class="menubtn"></button>
+        <div class="menu-content">
+          <label class="menu-label menu-label-top asm-color-row">Seçim yanıp sönmesi
+            <select id="asm-blink" class="asm-select"><option value="short">Kısa</option><option value="on">Sürekli</option><option value="off">Kapalı</option></select>
+          </label>
+          <div class="menu-label asm-color-row"><span id="asm-mask-lbl">PCB maske rengi</span>
+            <span class="asm-swatches" id="asm-board-colors" role="group" aria-labelledby="asm-mask-lbl"></span>
+          </div>
+          <label class="menu-label asm-color-row">
+            <span><input id="asm-singlekey" type="checkbox" checked> Tek tuş kısayolları (N)</span>
+          </label>
+          <label class="menu-label" style="width: calc(50% - 18px)">
+            <input id="darkmodeCheckbox" type="checkbox" onchange="setDarkMode(this.checked)">
+            Koyu tema
+          </label><!-- This comment eats space! All of it!
+          --><label class="menu-label menu-label-top" style="width: calc(50% - 17px); border-left: 0;">
+            <input id="fullscreenCheckbox" type="checkbox" onchange="setFullscreen(this.checked)">
+            Tam ekran
+          </label>
+          <label class="menu-label asm-hidden" style="width: calc(50% - 18px)">
+            <input id="fabricationCheckbox" type="checkbox" checked onchange="fabricationVisible(this.checked)">
+            Montaj katmanı
+          </label><!-- This comment eats space! All of it!
+          --><label class="menu-label" style="width: calc(50% - 17px); border-left: 0;">
+            <input id="silkscreenCheckbox" type="checkbox" checked onchange="silkscreenVisible(this.checked)">
+            Serigrafi
+          </label>
+          <label class="menu-label asm-hidden" style="width: calc(50% - 18px)">
+            <input id="referencesCheckbox" type="checkbox" checked onchange="referencesVisible(this.checked)">
+            Referanslar
+          </label><!-- This comment eats space! All of it!
+          --><label class="menu-label asm-hidden" style="width: calc(50% - 17px); border-left: 0;">
+            <input id="valuesCheckbox" type="checkbox" checked onchange="valuesVisible(this.checked)">
+            Değerler
+          </label>
+          <div id="tracksAndZonesCheckboxes">
+            <label class="menu-label" style="width: calc(50% - 18px)">
+              <input id="tracksCheckbox" type="checkbox" checked onchange="tracksVisible(this.checked)">
+              Yollar ve vialar
+            </label><!-- This comment eats space! All of it!
+            --><label class="menu-label" style="width: calc(50% - 17px); border-left: 0;">
+              <input id="zonesCheckbox" type="checkbox" checked onchange="zonesVisible(this.checked)">
+              Dolgular
+            </label>
+          </div>
+          <label class="menu-label" style="width: calc(50% - 18px)">
+            <input id="padsCheckbox" type="checkbox" checked onchange="padsVisible(this.checked)">
+            Padler
+          </label><!-- This comment eats space! All of it!
+          --><label class="menu-label" style="width: calc(50% - 17px); border-left: 0;">
+            <input id="dnpOutlineCheckbox" type="checkbox" checked onchange="dnpOutline(this.checked)">
+            DNP çerçeveli
+          </label>
+          <label class="menu-label">
+            <input id="highlightRowOnClickCheckbox" type="checkbox" checked onchange="setHighlightRowOnClick(this.checked)">
+            Satırı tıklayınca vurgula
+          </label>
+          <label class="menu-label">
+            <input id="dragCheckbox" type="checkbox" checked onchange="setRedrawOnDrag(this.checked)">
+            Sürüklerken sürekli çiz
+          </label>
+          <label class="menu-label">
+            1. pini vurgula
+            <form id="highlightpin1">
+              <div class="flexbox">
+                <label>
+                  <input type="radio" name="highlightpin1" value="none" onchange="setHighlightPin1('none')">
+                  Yok
+                </label>
+                <label>
+                  <input type="radio" name="highlightpin1" value="all" onchange="setHighlightPin1('all')">
+                  Tümü
+                </label>
+                <label>
+                  <input type="radio" name="highlightpin1" value="selected" onchange="setHighlightPin1('selected')">
+                  Seçili
+                </label>
+              </div>
+            </form>
+          </label>
+          <label class="menu-label">
+            <span>Kart döndürme</span>
+            <span style="float: right"><span id="rotationDegree">0</span>&#176;</span>
+            <input id="boardRotation" type="range" min="-36" max="36" value="0" class="slider" oninput="setBoardRotation(this.value)">
+          </label>
+          <label class="menu-label">
+            <input id="offsetBackRotationCheckbox" type="checkbox" onchange="setOffsetBackRotation(this.checked)">
+            Alt yüz döndürme ofseti
+          </label>
+          <label class="menu-label">
+            <div style="margin-left: 5px">BOM onay sütunları</div>
+            <input id="bomCheckboxes" class="menu-textbox" type=text
+                   oninput="setBomCheckboxes(this.value)">
+          </label>
+          <label class="menu-label">
+            <div style="margin-left: 5px">İşaretlenince boya</div>
+            <div id="markWhenCheckedContainer"></div>
+          </label>
+        </div>
+      </div>
+      <div class="button-container hideonprint">
+        <button id="fl-btn" class="left-most-button" onclick="changeCanvasLayout('F')"
+                title="Sadece üst yüz">F
+        </button>
+        <button id="fb-btn" class="middle-button" onclick="changeCanvasLayout('FB')"
+                title="Üst ve alt yüz">FB
+        </button>
+        <button id="bl-btn" class="right-most-button" onclick="changeCanvasLayout('B')"
+                title="Sadece alt yüz">B
+        </button>
+        <button id="d3-btn" class="right-most-button" title="3D görünüm (STEP)" aria-pressed="false" hidden>3D</button>
+      </div>
+      <div class="button-container hideonprint">
+        <button id="bom-btn" class="left-most-button" onclick="changeBomLayout('bom-only')"
+                title="Sadece BOM"></button>
+        <button id="lr-btn" class="middle-button" onclick="changeBomLayout('left-right')"
+                title="BOM solda, çizim sağda"></button>
+        <button id="tb-btn" class="right-most-button" onclick="changeBomLayout('top-bottom')"
+                title="BOM üstte, çizim altta"></button>
+      </div>
+      <div class="button-container hideonprint">
+        <button id="bom-grouped-btn" class="left-most-button" onclick="changeBomMode('grouped')"
+                title="Gruplu BOM"></button>
+        <button id="bom-ungrouped-btn" class="middle-button" onclick="changeBomMode('ungrouped')"
+                title="Grupsuz BOM"></button>
+        <button id="bom-netlist-btn" class="right-most-button" onclick="changeBomMode('netlist')"
+                title="Net listesi"></button>
+      </div>
+      <div class="hideonprint menu">
+        <button class="statsbtn"></button>
+        <div class="menu-content">
+          <table class="stats">
+            <tbody>
+              <tr>
+                <td width="40%">Kart istatistikleri</td>
+                <td>Üst</td>
+                <td>Alt</td>
+                <td>Toplam</td>
+              </tr>
+              <tr>
+                <td>Bileşen</td>
+                <td id="stats-components-front">~</td>
+                <td id="stats-components-back">~</td>
+                <td id="stats-components-total">~</td>
+              </tr>
+              <tr>
+                <td>Grup</td>
+                <td id="stats-groups-front">~</td>
+                <td id="stats-groups-back">~</td>
+                <td id="stats-groups-total">~</td>
+              </tr>
+              <tr>
+                <td>SMD pad</td>
+                <td id="stats-smd-pads-front">~</td>
+                <td id="stats-smd-pads-back">~</td>
+                <td id="stats-smd-pads-total">~</td>
+              </tr>
+              <tr>
+                <td>TH pad</td>
+                <td colspan=3 id="stats-th-pads">~</td>
+              </tr>
+            </tbody>
+          </table>
+          <table class="stats">
+            <col width="40%"/><col />
+            <tbody id="checkbox-stats">
+              <tr>
+                <td colspan=2 style="border-top: 0">Onay sütunları</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="hideonprint menu">
+        <button class="iobtn"></button>
+        <div class="menu-content">
+          <div class="menu-label menu-label-top">
+            <div style="margin-left: 5px;">Kart görüntüsünü kaydet</div>
+            <div class="flexbox">
+              <input id="render-save-width" class="menu-textbox" type="text" value="1000" placeholder="Genişlik"
+                  style="flex-grow: 1; width: 50px;" oninput="validateSaveImgDimension(this)">
+              <span>X</span>
+              <input id="render-save-height" class="menu-textbox" type="text" value="1000" placeholder="Yükseklik"
+                  style="flex-grow: 1; width: 50px;" oninput="validateSaveImgDimension(this)">
+            </div>
+            <label>
+              <input id="render-save-transparent" type="checkbox">
+              Şeffaf arka plan
+            </label>
+            <div class="flexbox">
+              <button class="savebtn" onclick="saveImage('F')">Üst</button>
+              <button class="savebtn" onclick="saveImage('B')">Alt</button>
+            </div>
+          </div>
+          <div class="menu-label">
+            <span style="margin-left: 5px;">BOM tablosunu kaydet</span>
+            <div class="flexbox">
+              <button class="savebtn" onclick="saveBomTable('csv')">csv</button>
+              <button class="savebtn" onclick="saveBomTable('txt')">txt</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+        <div class="job-now" id="asm-nowbar" role="region" aria-label="Şimdi">
+      <span class="asm-modes" role="group" aria-label="Çalışma modu">
+        <button class="asm-mode" id="asm-mode-assembly" aria-pressed="true" title="Dizgi (montaj) modu">Dizgi</button>
+        <button class="asm-mode" id="asm-mode-test" aria-pressed="false" title="Donanım test modu: adım adım ölçüm prosedürü">Test</button>
+      </span>
+      <span class="job-k now-k" aria-hidden="true">Şimdi</span>
+      <span class="now-text" id="asm-now" aria-live="polite" aria-atomic="true">Bir BOM satırı seçin</span>
+      <span class="now-btns">
+        <button class="asm-btn" id="asm-prev" title="Önceki satır (↑)">◀ Önceki</button>
+        <button class="asm-btn primary" id="asm-place" title="Satırı yerleştirildi işaretle ve sonrakine geç (N)">Yerleştirildi ✓</button>
+        <button class="asm-btn" id="asm-next" title="Sonraki satır (↓)">Sonraki ▶</button>
+      </span>
+    </div>
+  </div>
+  <div id="topdivider">
+    <div class="hideonprint">
+      <div id="toptoggle" onclick="topToggle()">︽</div>
+    </div>
+  </div>
+  <div id="bot" class="split" style="flex: 1 1">
+    <div id="bomdiv" class="split split-horizontal">
+        <button class="asm-max" aria-pressed="false" data-pane="bomdiv" title="Bu paneli tam ekran yap / geri al (Esc)"></button>
+      <section id="asm-test" class="asm-test" aria-label="Donanım testi" hidden></section>
+      <div style="width: 100%">
+        <input id="reflookup" class="textbox searchbox reflookup hideonprint" type="text" placeholder="Referans ara (Alt+R)"
+               oninput="updateRefLookup(this.value)">
+        <input id="filter" class="textbox searchbox filter hideonprint" type="text" placeholder="Filtre (Alt+F)"
+               oninput="updateFilter(this.value)">
+        <div class="button-container hideonprint" style="float: left; margin: 0;">
+          <button id="copy" title="BOM tablosunu panoya kopyala"
+               onclick="saveBomTable('clipboard')"></button>
+        </div>
+      </div>
+      <div id="dbg"></div>
+      <p class="asm-hint" id="asm-hint" aria-hidden="false">↑ ↓ satır · N yerleştir ve sonraki · Ctrl+Z geri al · Esc paneli küçült · Alt+F filtre · Kartta: oklar kaydır, + − yakınlaştır, 0 sığdır</p>
+      <table class="bom" id="bomtable">
+        <thead id="bomhead">
+        </thead>
+        <tbody id="bombody">
+        </tbody>
+      </table>
+    </div>
+    <div id="canvasdiv" class="split split-horizontal">
+      <div id="asm-netlegend" class="asm-netlegend" role="note" aria-label="Ölçülen netler" hidden></div>
+      <div id="asm3d" class="asm3d" tabindex="0" role="group" aria-roledescription="3D kart görünümü" hidden>
+        <button class="asm-max" aria-pressed="false" data-pane="asm3d" title="Bu paneli tam ekran yap / geri al (Esc)"></button>
+        <canvas id="asm3d-canvas"></canvas>
+        <div class="asm3d-tools" id="asm3d-tools" role="toolbar" aria-label="3D görünüm araçları">
+          <button class="asm3d-btn" id="asm3d-top" title="Üstten bak (Ü)">Üstten</button>
+          <button class="asm3d-btn" id="asm3d-bottom" title="Alttan bak (A)">Alttan</button>
+          <button class="asm3d-btn" id="asm3d-iso" title="İzometrik (İ / 0)">İzo</button>
+          <button class="asm3d-btn" id="asm3d-focus" title="Seçili parçaya odaklan (O)">Seçime odaklan</button>
+          <label class="asm3d-mode"><span>Göster</span>
+            <select id="asm3d-mode" class="asm-select"><option value="all">Tüm parçalar</option><option value="placed">Dizilenler + seçili</option></select>
+          </label>
+        </div>
+        <div class="asm3d-tip" id="asm3d-tip" hidden></div>
+        <div class="asm3d-note" id="asm3d-note" role="status" hidden></div>
+        <div class="asm3d-status" id="asm3d-status" role="status" hidden></div>
+      </div>
+      <div id="frontcanvas" class="split" touch-action="none" style="overflow: hidden">
+        <button class="asm-max" aria-pressed="false" data-pane="frontcanvas" title="Bu paneli tam ekran yap / geri al (Esc)"></button>
+        <div style="position: relative; width: 100%; height: 100%;">
+          <canvas id="F_bg" style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
+          <canvas id="F_fab" style="position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
+          <canvas id="F_slk" style="position: absolute; left: 0; top: 0; z-index: 2;"></canvas>
+          <canvas id="F_hl" style="position: absolute; left: 0; top: 0; z-index: 3;"></canvas>
+        </div>
+      </div>
+      <div id="backcanvas" class="split" touch-action="none" style="overflow: hidden">
+        <button class="asm-max" aria-pressed="false" data-pane="backcanvas" title="Bu paneli tam ekran yap / geri al (Esc)"></button>
+        <div style="position: relative; width: 100%; height: 100%;">
+          <canvas id="B_bg" style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
+          <canvas id="B_fab" style="position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
+          <canvas id="B_slk" style="position: absolute; left: 0; top: 0; z-index: 2;"></canvas>
+          <canvas id="B_hl" style="position: absolute; left: 0; top: 0; z-index: 3;"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="asm-modal-root"></div>
+<div id="asm-toasts" role="status" aria-live="polite" aria-relevant="additions"></div>
+</body>
+
+</html>

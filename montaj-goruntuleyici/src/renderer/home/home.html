@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <title>Montaj Görüntüleyici</title>
+  <link rel="stylesheet" href="../fonts/fonts.css">
+  <link rel="stylesheet" href="home.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 40 24" class="logo" aria-hidden="true"><rect x="1" y="5" width="9" height="14" rx="1.5"/><rect x="30" y="5" width="9" height="14" rx="1.5"/><rect x="8" y="2" width="24" height="20" rx="2" class="body"/></svg>
+      <span class="brand-name">Montaj Görüntüleyici</span>
+    </div>
+    <div class="top-actions">
+      <label class="lang"><span class="sr">Dil / Language</span>
+        <select id="lang" title="Dil / Language"><option value="tr">TR</option><option value="en">EN</option></select>
+      </label>
+      <button class="btn on-mask theme-btn" id="btn-theme" title="Açık / koyu tema" aria-label="Açık / koyu tema">◐</button>
+      <button class="btn on-mask" id="btn-about">Hakkında</button>
+      <button class="btn on-mask" id="btn-datadir" title="">Veri klasörü</button>
+      <button class="btn gold" id="btn-new">Yeni proje</button>
+    </div>
+  </header>
+  <section id="kicad-bar" class="kicad-bar" hidden aria-label="KiCad projesi"></section>
+
+  <main id="view-home" class="view">
+    <section id="resume" class="traveller" hidden></section>
+    <div class="list-head" id="list-head">
+      <h2>Projeler</h2>
+      <input id="proj-filter" class="input" type="search" placeholder="Proje ara…" aria-label="Proje ara">
+    </div>
+    <div id="projects" class="projects"></div>
+    <div id="empty" class="empty" hidden>
+      <h2>Henüz proje yok</h2>
+      <p data-en="Start with the Altium outputs of a board: an <b>IPC-2581</b> file and its <b>BOM</b>.">Bir kartın Altium çıktılarıyla başlayın: <b>IPC-2581</b> dosyası ve <b>BOM</b>.</p>
+      <button class="btn primary" id="btn-new-2">Yeni proje oluştur</button>
+    </div>
+  </main>
+
+  <main id="view-wizard" class="view" hidden>
+    <div class="wiz-head">
+      <button class="btn ghost" id="wiz-back">Projeler</button>
+      <h2 id="wiz-title">Yeni proje</h2>
+    </div>
+
+    <section class="card">
+      <h3 class="step"><span class="num">1</span>Proje bilgileri</h3>
+      <div class="grid3">
+        <label>Proje / kart adı<input id="m-title" class="input" aria-required="true" placeholder="ör. PSU_28V_5V"></label>
+        <label>Revizyon<input id="m-rev" class="input" placeholder="ör. B"></label>
+        <label>Firma<input id="m-company" class="input" placeholder="ör. Anova Ar-Ge"></label>
+      </div>
+    </section>
+
+    <section class="card" id="sec-ipc">
+      <h3 class="step"><span class="num">2</span>IPC-2581 dosyası</h3>
+      <p class="hint" data-en="Altium: <i>File → Fabrication Outputs → IPC-2581 Files</i>. Positions, pads, traces, vias, holes and silkscreen are read from this file.">Altium: <i>File → Fabrication Outputs → IPC-2581 Files</i>. Bileşen konumları, pad, yol, via, delik ve serigrafi bu dosyadan okunur.</p>
+      <div class="row">
+        <button class="btn" id="i-file">Dosya seç…</button>
+        <span class="path" id="i-path">—</span>
+      </div>
+    </section>
+
+    <section class="card" id="sec-bom">
+      <h3 class="step"><span class="num">3</span>BOM</h3>
+      <p class="hint">CSV / XLS / XLSX. BOM'da olmayan bileşenler DNP sayılır. BOM seçilmezse IPC-2581 içindeki BOM bölümü kullanılır.</p>
+      <div class="row">
+        <button class="btn" id="b-file">Dosya seç…</button>
+        <button class="btn ghost" id="b-clear">Kaldır</button>
+        <span class="path" id="b-path">—</span>
+        <select id="b-sheet" class="input small" hidden></select>
+      </div>
+      <div id="b-map" class="mapping" hidden></div>
+    </section>
+
+    <section class="card" id="sec-step">
+      <h3 class="step"><span class="num">4</span>3D model (STEP) <span class="opt">isteğe bağlı</span></h3>
+      <p class="hint" data-en="Altium: <i>File → Export → STEP 3D</i>. Keep each component as a separate body (do not tick <i>Export As Single Part</i>). Bodies are matched to designators by name, otherwise by position.">Altium: <i>File → Export → STEP 3D</i>. Bileşenler ayrı gövde olarak kalmalı (<i>Export As Single Part</i> işaretlenmemeli). Gövdeler designator'a isimle, olmazsa konumla eşlenir.</p>
+      <div class="row">
+        <button class="btn" id="s-file">Dosya seç…</button>
+        <button class="btn ghost" id="s-clear">Kaldır</button>
+        <span class="path" id="s-path">—</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3 class="step"><span class="num">5</span>Onay sütunları</h3>
+      <div class="grid3">
+        <label>Onay sütunları (virgülle)<input id="c-boxes" class="input" value="Dizildi"></label>
+        <label>İşaretlenince kartta boya<select id="c-mark" class="input"></select></label>
+      </div>
+    </section>
+
+    <section class="card preview-card" id="sec-preview">
+      <div class="row actions-row">
+        <button class="btn" id="btn-preview">Önizle</button>
+        <button class="btn primary" id="btn-save" disabled>Projeyi kaydet</button>
+        <span class="muted" id="prev-status"></span>
+      </div>
+      <div id="report" class="report" role="region" aria-live="polite" aria-label="İçe aktarma raporu" tabindex="-1" hidden></div>
+      <div class="previews" id="previews" hidden>
+        <figure><figcaption>Üst yüz</figcaption><canvas id="cv-F"></canvas></figure>
+        <figure><figcaption>Alt yüz (aynalı)</figcaption><canvas id="cv-B"></canvas></figure>
+      </div>
+    </section>
+  </main>
+
+
+  <main id="view-about" class="view" hidden>
+    <div class="wiz-head">
+      <button class="btn ghost" id="about-back">Projeler</button>
+      <h2>Hakkında</h2>
+      <span class="muted" id="about-ver"></span>
+    </div>
+    <article class="guide" data-lang="tr">
+      <h2>Kullanım kılavuzu</h2>
+      <p>Montaj Görüntüleyici, bir kartın IPC-2581 verisi ve BOM'u ile dizgi (montaj) işini adım adım yürütmek ve her kartın ilerlemesini teknisyen ve zaman bilgisiyle kayıt altına almak için kullanılır.</p>
+      <h3>Desteklenen dosyalar</h3>
+      <ul>
+        <li><b>IPC-2581</b> (Rev. A, B, C; .xml / .cvg) — zorunlu. Okunan katmanlar: Top, ara katmanlar ve Bottom bakır (pad, yol, via, net), Top / Bottom Silkscreen ve delik katmanları. Montaj, doküman, maske ve pasta katmanları okunmaz. Kodlama XML başlığından alınır (UTF-8, windows-1254, ISO-8859-9, UTF-16).</li>
+        <li><b>BOM</b> — CSV, TXT, XLS, XLSX. Designator sütunu <i>R1, R2</i> veya <i>R1-R5</i> biçiminde olabilir. Description, Manufacturer, Manufacturer Part Number sütunları otomatik gösterilir. BOM verilmezse IPC-2581 içindeki BOM kullanılır; BOM'da olmayan bileşenler DNP sayılır.</li>
+        <li><b>STEP</b> (AP203 / AP214 / AP242; .step / .stp) — isteğe bağlı, 3D görünüm için. Altium: <i>File → Export → STEP 3D</i>; <i>Export As Single Part</i> işaretlenmemelidir. Gövdeler designator'a isimle (ör. <i>C12</i>, <i>C12_Kart</i>), isim yoksa konumla eşlenir; model kart verisine otomatik hizalanır. Eşleşme özeti önizleme raporunda görünür.</li>
+      </ul>
+      <h3>Proje oluşturma</h3>
+      <ol>
+        <li>Altium'da <i>File → Fabrication Outputs → IPC-2581 Files</i> ile dosyayı, <i>Reports → Bill of Materials</i> ile BOM'u alın.</li>
+        <li><b>Yeni proje</b>: ad ve revizyonu girin, IPC-2581 ve BOM dosyasını seçin, BOM sütunlarını kontrol edin.</li>
+        <li><b>Önizle</b> ile raporu ve kart görüntüsünü kontrol edin, ardından <b>Projeyi kaydet</b>.</li>
+      </ol>
+      <h3>Dizgi</h3>
+      <ol>
+        <li><b>Montaja başla / devam</b> ile seri numarasını (barkod okutulabilir) ve teknisyen adını girin.</li>
+        <li>BOM satırına gelin: o satırın bileşenleri kartta <b>sarı yanıp söner</b>. Yerleştirdikçe onay kutularını işaretleyin; yerleştirilen bileşenler kartta <b>mavi</b> görünür.</li>
+        <li>Her işaretleme zaman, teknisyen ve seri no ile kayda geçer. Uygulama kapanıp açıldığında son kart ve son satırdan devam eder.</li>
+      </ol>
+      <h3>Görüntüleyici</h3>
+      <ul>
+        <li>Üç panelin (BOM, üst yüz, alt yüz) her biri sağ üstteki düğmeyle tek ekran yapılabilir; <b>Esc</b> geri alır.</li>
+        <li>Bir yola tıklamak o neti vurgular. Ayarlar menüsünden PCB maske rengi, serigrafi, pad, yol ve dolgu görünürlüğü değiştirilir.</li>
+        <li>Klavye: ↑ / ↓ satır değiştir, <b>N</b> satırı yerleştirildi işaretle ve sonrakine geç, Alt+1…9 onay sütunu, Alt+F filtre, Alt+R referans ara, ← / → kartı döndür.</li>
+        <li><b>Kayıt</b> düğmesi montaj kaydını gösterir ve CSV olarak dışa aktarır.</li>
+      </ul>
+      <h3>3D görünüm</h3>
+      <ul>
+        <li>Projede STEP dosyası varsa araç çubuğunda <b>3D</b> düğmesi çıkar; kart çizimi yerine 3D model açılır. <b>Üst yüz / İki yüz / Alt yüz</b> düğmeleri 2D'ye döner.</li>
+        <li>Seçili satırın parçaları sarı yanıp söner, dizilenler mavi tonlanır. 3D'de bir parçaya tıklamak BOM satırını seçer; üzerine gelince referansı görünür.</li>
+        <li>Fare: sol tuş döndür, sağ tuş kaydır, tekerlek yakınlaştır. Klavye (3D panel odaktayken): oklar döndür, + / − yakınlaştır, <b>0</b> veya <b>İ</b> izometrik, <b>Ü</b> üstten, <b>A</b> alttan, <b>O</b> seçime odaklan.</li>
+        <li><b>Göster → Dizilenler + seçili</b> kartın o anki montaj durumunu gösterir. Maske rengi ayarı 3D kartı da boyar.</li>
+        <li>Bağımsız HTML dışa aktarımında 3D görünüm yer almaz.</li>
+      </ul>
+      <h3>Donanım testi (Test &amp; Assembly)</h3>
+      <ul>
+        <li>Görüntüleyicide <b>Dizgi | Test</b> anahtarı ile test moduna geçilir. Kart verisinden adım adım bir ölçüm prosedürü otomatik oluşturulur; şu an ilk aşama <b>GND / şase kısa devre ve süreklilik</b> testidir.</li>
+        <li>GND, AGND, PGND, GND1…, şase (CHASSIS, EARTH, SHIELD, PE …) netleri isimden tanınır. Her net için iki uzak noktada süreklilik (< 2 Ω), her net çifti için kısa devre kontrolü yapılır.</li>
+        <li>Beklenen değer tasarımdan çıkarılır: iki net arasında bağlantı yoksa açık devre (> 1 MΩ / OL), direnç varsa onun değeri, ferrit / 0 Ω / sigorta varsa kısa devre beklenir; IC üzerinden bağlıysa karar teknisyene bırakılır.</li>
+        <li>Prob noktaları kartta gösterilir: <b>kırmızı (+)</b> ve <b>siyah (COM)</b> halka 2D'de, gerçek prob modeli 3D'de. Test noktaları ve konnektör pinleri tercih edilir, ince adımlı IC bacakları ve DNP parçalar seçilmez.</li>
+        <li>Probların değdiği netlerin tüm yolları, pad'leri ve vialarıyla vurgulanır (+ neti kırmızı, COM neti camgöbeği); netin her noktası halkayla işaretlenir. Kartta her probun altında aynı netteki <b>alternatif noktalar</b> listelenir; birine tıklamak probu oraya taşır ve rapora o nokta yazılır.</li>
+        <li>Aşamalar: <b>1</b> GND / şase kısa devre ve süreklilik, <b>2</b> güç rayları – GND / şase kısa devre (enerjisiz, Ω), <b>3</b> gerilim kanalları (enerjili, V): önce besleme gerilimi, akım sınırı ve kaynağın bağlanacağı noktalar, sonra her ray (giriş rayı ±%10, diğerleri ±%5), <b>4</b> haberleşme (I²C / UART / SPI boşta seviye, CAN ve RS-422/485 fark gerilimi), <b>5</b> sensör hatları (VREF ±%2), <b>6</b> konnektöre çıkan I/O hatları.</li>
+        <li>Ray gerilimi net adından okunur (28V_IN, +12V, 5V0, 3V3, 1V8, −12V). Adından çıkmayan raylar (VCC gibi), toleranslar, akım sınırı ve aşamalar <b>Test ayarları</b> penceresinden projeye göre ayarlanır. Enerjisiz testlerde KALDI varken enerjili adımlarda uyarı gösterilir.</li>
+        <li>İlk adımda probları birbirine değdirip prob direncini girin; sonraki ölçümlerden düşülür. Değer <i>0.4</i>, <i>12k</i>, <i>1.5M</i> veya <i>OL</i> yazılabilir; Enter kaydeder ve sonraki adıma geçer.</li>
+        <li>Sonuçlar karta (seri no) bağlı saklanır, montaj kaydına yazılır ve <i>projects/&lt;proje&gt;/test-reports/&lt;seri no&gt;.pdf</i> raporu (A4 yatay; özet, ölçüm tablosu, imza alanları) otomatik güncellenir (KiCad eklentisinde <i>&lt;proje&gt;/docs/montaj</i> altında). <b>Raporu kaydet (PDF)…</b> ile istediğiniz yere kopyalayabilirsiniz.</li>
+        <li>Ray / toprak sınıflandırması net adından yapılır (GND, AGND, CHASSIS, SHIELD …; +28V_IN, 12V, 5V0, 3V3, VCC …). <b>Test ayarları</b> her netin neden o sınıfa girdiğini gösterir; nominal değeri, giriş rayını ve teste dahil olmayı buradan değiştirebilirsiniz.</li>
+      </ul>
+      <h3>KiCad eklentisi</h3>
+      <ul>
+        <li>KiCad 8, 9 veya 10 PCB editöründe araç çubuğundaki <b>Montaj Görüntüleyici</b> düğmesi kartı editördeki haliyle (kaydedilmemiş değişiklikler dahil) dışa aktarır: önce IPC-2581, sonra şematikten BOM (Reference, Value, Footprint, Description, Manufacturer, MPN; DNP hariç), sonra STEP 3D. Ardından montaj programı ayrı pencerede açılır.</li>
+        <li>Dışa aktarılan dosyalar <i>&lt;proje&gt;/docs/montaj/kicad-export</i>, projeler, kart ilerlemeleri ve montaj kaydı (log) <i>&lt;proje&gt;/docs/montaj</i> klasöründe tutulur; tasarımla birlikte arşivlenebilir.</li>
+        <li>Düğmeye tekrar basmak açık programa yeni veriyi gönderir: değişiklik yoksa proje aynen açılır, değişiklik varsa güncellenir ve kart ilerlemeleri (designator bazında) korunur.</li>
+        <li>Üretici ve parça no alanları şematikteki <i>Manufacturer</i> / <i>MPN</i> (veya <i>Manufacturer Part Number</i>, <i>Mfr. Part #</i> …) alanlarından otomatik seçilir.</li>
+        <li>Ayar dosyası (isteğe bağlı): eklenti klasöründeki <i>montaj_kicad.json</i> — <i>kicad_cli</i>, <i>app_path</i>, <i>export_step</i> (true/false).</li>
+      </ul>
+      <h3>Erişilebilirlik ve klavye</h3>
+      <ul>
+        <li>Tüm menüler (Ayarlar, Dışa aktar) Tab ile seçilip <b>Enter</b> ile açılır, <b>Esc</b> ile kapanır.</li>
+        <li>Kart görünümüne Tab ile gelindiğinde ok tuşları kaydırır, <b>+</b> / <b>−</b> yakınlaştırır, <b>0</b> kartı sığdırır.</li>
+        <li><b>Ctrl+Z</b> son işaretlemeyi geri alır; bildirimler fare üzerindeyken kaybolmaz.</li>
+        <li>Dizilen parçalar kartta renge ek olarak çizgili tarama ile gösterilir (renk körlüğüne uygun).</li>
+        <li>Tek tuş kısayolu (<b>N</b>) Ayarlar menüsünden kapatılabilir. Ekran okuyucular (NVDA) seçili satırı ve bildirimleri okur.</li>
+      </ul>
+      <h3>Veriler</h3>
+      <p>Projeler, kart ilerlemeleri ve kayıtlar <b>Veri klasörü</b>nde JSON dosyaları olarak tutulur; yedeklenebilir veya ağ klasörüne taşınabilir. Aynı karta aynı anda iki istasyondan işlem yapmayın.</p>
+      <h2>Açık kaynak lisansları</h2>
+      <p>Bu uygulama aşağıdaki açık kaynak bileşenleri kullanır. Lisans metinleri uygulama klasöründe de bulunur.</p>
+      <table class="tbl lic">
+        <thead><tr><th>Bileşen</th><th>Lisans</th><th>Telif / not</th></tr></thead>
+        <tbody>
+          <tr><td>Electron</td><td>MIT</td><td>Copyright (c) Electron contributors, Copyright (c) 2013-2020 GitHub Inc.</td></tr>
+          <tr><td>Chromium, Node.js</td><td>BSD / MIT ve diğerleri</td><td>Ayrıntılı liste: uygulama klasöründeki LICENSES.chromium.html</td></tr>
+          <tr><td>InteractiveHtmlBom</td><td>MIT</td><td>Copyright (c) 2018 qu1ck — görüntüleme kodu bu projeden uyarlanmıştır</td></tr>
+          <tr><td>Split.js</td><td>MIT</td><td>Copyright (c) 2020 Nathan Cahill</td></tr>
+          <tr><td>PEP (Pointer Events Polyfill)</td><td>MIT</td><td>Copyright jQuery Foundation and other contributors</td></tr>
+          <tr><td>SheetJS (xlsx)</td><td>Apache-2.0</td><td>Copyright (C) 2012-present SheetJS LLC — lisans metni: resources/app.asar içinde node_modules/xlsx/LICENSE</td></tr>
+          <tr><td>three.js</td><td>MIT</td><td>Copyright © 2010-2022 three.js authors — 3D görüntüleme</td></tr>
+          <tr><td>occt-import-js</td><td>LGPL-2.1</td><td>Viktor Kovács ve katkıda bulunanlar — STEP okuma (WASM). Kütüphane uygulama klasöründe (resources/app.asar.unpacked/node_modules/occt-import-js) ayrı dosya olarak durur ve değiştirilebilir; kaynak kodu: github.com/kovacsv/occt-import-js. Lisans metni: renderer/viewer/lib/license.occt-import-js.txt</td></tr>
+          <tr><td>Open CASCADE Technology</td><td>LGPL-2.1 + OCCT istisnası</td><td>Copyright (c) Open CASCADE SAS — occt-import-js içinde. Lisans metni: renderer/viewer/lib/license.occt.txt</td></tr>
+          <tr><td>DejaVu Sans</td><td>Bitstream Vera / Arev / kamu malı</td><td>Copyright (c) 2003 Bitstream, Inc.; DejaVu değişiklikleri kamu malı — lisans metni: renderer/fonts/LICENSE-DejaVu.txt</td></tr>
+        </tbody>
+      </table>
+      <h3>MIT License</h3>
+      <p class="legal">Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+    </article>
+    <article class="guide" data-lang="en">
+      <h2>User guide</h2>
+      <p>Assembly Viewer guides board assembly step by step from a board's IPC-2581 data and BOM, and records the progress of every board with technician and time stamps.</p>
+      <h3>Supported files</h3>
+      <ul>
+        <li><b>IPC-2581</b> (Rev. A, B, C; .xml / .cvg) — required. Layers read: Top, inner and Bottom copper (pads, traces, vias, nets), Top / Bottom silkscreen and drill layers. Assembly, document, mask and paste layers are not read. The encoding declared in the XML header is honoured.</li>
+        <li><b>BOM</b> — CSV, TXT, XLS, XLSX. Designators may be written as <i>R1, R2</i> or <i>R1-R5</i>. Description, Manufacturer and Manufacturer Part Number columns are shown by default. Without a BOM the BOM inside the IPC-2581 file is used; parts missing from the BOM are treated as DNP.</li>
+        <li><b>STEP</b> (AP203 / AP214 / AP242; .step / .stp) — optional, for the 3D view. Altium: <i>File → Export → STEP 3D</i>; leave <i>Export As Single Part</i> unticked. Bodies are matched to designators by name (e.g. <i>C12</i>, <i>C12_Board</i>) or, without a name, by position; the model is aligned to the board data automatically. The match summary appears in the preview report.</li>
+      </ul>
+      <h3>Creating a project</h3>
+      <ol>
+        <li>In Altium export <i>File → Fabrication Outputs → IPC-2581 Files</i> and the BOM via <i>Reports → Bill of Materials</i>.</li>
+        <li><b>New project</b>: enter name and revision, select the IPC-2581 and BOM files, check the BOM columns.</li>
+        <li>Check the report and board image with <b>Preview</b>, then <b>Save project</b>.</li>
+      </ol>
+      <h3>Assembly</h3>
+      <ol>
+        <li><b>Start / continue assembly</b>: enter the serial number (barcode scanners work) and the technician name.</li>
+        <li>Move to a BOM line: its parts <b>blink yellow</b> on the board. Tick the checkboxes as you place; placed parts turn <b>blue</b>.</li>
+        <li>Every tick is logged with time, technician and serial number. When reopened the app continues from the last board and line.</li>
+      </ol>
+      <h3>Viewer</h3>
+      <ul>
+        <li>Each of the three panes (BOM, top, bottom) can be maximised with its corner button; <b>Esc</b> restores.</li>
+        <li>Click a trace to highlight its net. The settings menu changes PCB mask colour and silkscreen, pad, trace and pour visibility.</li>
+        <li>Keys: ↑ / ↓ change line, <b>N</b> mark line placed and go to next, Alt+1…9 checkbox column, Alt+F filter, Alt+R ref lookup, ← / → rotate board.</li>
+        <li>The <b>Log</b> button shows the assembly log and exports it as CSV.</li>
+      </ul>
+      <h3>3D view</h3>
+      <ul>
+        <li>When the project has a STEP file a <b>3D</b> button appears in the toolbar and the board drawing is replaced by the 3D model. <b>Top side / Both sides / Bottom side</b> return to 2D.</li>
+        <li>Parts of the selected line blink yellow, placed parts are tinted blue. Clicking a part in 3D selects its BOM line; hovering shows its reference.</li>
+        <li>Mouse: left button rotates, right button pans, wheel zooms. Keys (3D pane focused): arrows rotate, + / − zoom, <b>0</b> or <b>I</b> isometric, <b>U</b> top, <b>A</b> bottom, <b>O</b> focus the selection.</li>
+        <li><b>Show → Placed + selected</b> shows the board's current assembly state. The mask colour setting also paints the 3D board.</li>
+        <li>The stand-alone HTML export does not include the 3D view.</li>
+      </ul>
+      <h3>Hardware test (Test &amp; Assembly)</h3>
+      <ul>
+        <li>The <b>Assembly | Test</b> switch in the viewer opens test mode. A step-by-step measurement procedure is generated from the board data; the first phase is the <b>GND / chassis short circuit and continuity</b> test.</li>
+        <li>GND, AGND, PGND, GND1…, chassis (CHASSIS, EARTH, SHIELD, PE …) nets are recognised by name. Every net gets a continuity check between two distant points (< 2 Ω) and every pair of nets a short circuit check.</li>
+        <li>The expected value comes from the design: no connection → open circuit (> 1 MΩ / OL), a resistor → its value, a ferrite / 0 Ω / fuse → short; through an IC the technician decides.</li>
+        <li>Probe points are shown on the board: <b>red (+)</b> and <b>black (COM)</b> rings in 2D, real probe models in 3D. Test points and connector pins are preferred; fine-pitch IC legs and DNP parts are avoided.</li>
+        <li>The probed nets are highlighted with all their traces, pads and vias (+ net red, COM net cyan) and every point of the net is ringed. Under each probe the card lists <b>alternative points</b> on the same net; clicking one moves the probe there and the report records that point.</li>
+        <li>Phases: <b>1</b> GND / chassis short circuit and continuity, <b>2</b> power rails – GND / chassis short circuit (unpowered, Ω), <b>3</b> voltage rails (powered, V): first the supply voltage, current limit and where to connect the supply, then every rail (input rail ±10 %, others ±5 %), <b>4</b> communication (I²C / UART / SPI idle level, CAN and RS-422/485 differential voltage), <b>5</b> sensor lines (VREF ±2 %), <b>6</b> I/O lines leaving the board.</li>
+        <li>Rail voltages come from the net names (28V_IN, +12V, 5V0, 3V3, 1V8, −12V). Rails without a voltage in the name (such as VCC), tolerances, the current limit and the phases are set per project in <b>Test settings</b>. Powered steps warn while unpowered tests have a FAIL.</li>
+        <li>In the first step touch the probes together and enter the probe resistance; it is subtracted from later readings. Values can be typed as <i>0.4</i>, <i>12k</i>, <i>1.5M</i> or <i>OL</i>; Enter saves and moves on.</li>
+        <li>Results are stored per board (serial number), written to the assembly log and to <i>projects/&lt;project&gt;/test-reports/&lt;serial&gt;.pdf</i> (A4 landscape; summary, measurement table, signature fields), kept up to date automatically (with the KiCad plugin under <i>&lt;project&gt;/docs/montaj</i>). <b>Save report (PDF)…</b> copies it anywhere.</li>
+        <li>Rails and grounds are classified from the net name (GND, AGND, CHASSIS, SHIELD …; +28V_IN, 12V, 5V0, 3V3, VCC …). <b>Test settings</b> shows why each net was classified; the nominal value, input rail and inclusion can be changed there.</li>
+      </ul>
+      <h3>KiCad plugin</h3>
+      <ul>
+        <li>In the KiCad 8, 9 or 10 PCB editor the <b>Assembly Viewer</b> toolbar button exports the board as currently edited (unsaved changes included): first IPC-2581, then the BOM from the schematic (Reference, Value, Footprint, Description, Manufacturer, MPN; DNP excluded), then STEP 3D. The assembly application then opens in its own window.</li>
+        <li>Exported files go to <i>&lt;project&gt;/docs/montaj/kicad-export</i>; projects, board progress and the assembly log are kept in <i>&lt;project&gt;/docs/montaj</i>, so they can be archived with the design.</li>
+        <li>Pressing the button again sends the new data to the open application: unchanged data just reopens the project, changed data updates it and board progress (by designator) is kept.</li>
+        <li>Manufacturer and part number fields are picked automatically from the schematic's <i>Manufacturer</i> / <i>MPN</i> (or <i>Manufacturer Part Number</i>, <i>Mfr. Part #</i> …) fields.</li>
+        <li>Optional settings file: <i>montaj_kicad.json</i> in the plugin folder — <i>kicad_cli</i>, <i>app_path</i>, <i>export_step</i> (true/false).</li>
+      </ul>
+      <h3>Accessibility and keyboard</h3>
+      <ul>
+        <li>All menus (Settings, Export) are reached with Tab, opened with <b>Enter</b> and closed with <b>Esc</b>.</li>
+        <li>When a board view has focus, arrow keys pan, <b>+</b> / <b>−</b> zoom and <b>0</b> fits the board.</li>
+        <li><b>Ctrl+Z</b> undoes the last mark; notifications stay while the pointer is over them.</li>
+        <li>Placed parts are shown with diagonal hatching as well as colour (colour-blind safe).</li>
+        <li>The single-key shortcut (<b>N</b>) can be turned off in Settings. Screen readers (NVDA) announce the current line and notifications.</li>
+      </ul>
+      <h3>Data</h3>
+      <p>Projects, board progress and logs are stored as JSON files in the <b>Data folder</b>; it can be backed up or moved to a network share. Do not work on the same board from two stations at once.</p>
+      <h2>Open source licences</h2>
+      <p>This application uses the following open source components. Licence texts are also shipped in the application folder.</p>
+      <table class="tbl lic">
+        <thead><tr><th>Component</th><th>Licence</th><th>Copyright / note</th></tr></thead>
+        <tbody>
+          <tr><td>Electron</td><td>MIT</td><td>Copyright (c) Electron contributors, Copyright (c) 2013-2020 GitHub Inc.</td></tr>
+          <tr><td>Chromium, Node.js</td><td>BSD / MIT and others</td><td>Full list: LICENSES.chromium.html in the application folder</td></tr>
+          <tr><td>InteractiveHtmlBom</td><td>MIT</td><td>Copyright (c) 2018 qu1ck — the viewer code is adapted from this project</td></tr>
+          <tr><td>Split.js</td><td>MIT</td><td>Copyright (c) 2020 Nathan Cahill</td></tr>
+          <tr><td>PEP (Pointer Events Polyfill)</td><td>MIT</td><td>Copyright jQuery Foundation and other contributors</td></tr>
+          <tr><td>SheetJS (xlsx)</td><td>Apache-2.0</td><td>Copyright (C) 2012-present SheetJS LLC — licence text: node_modules/xlsx/LICENSE inside resources/app.asar</td></tr>
+          <tr><td>three.js</td><td>MIT</td><td>Copyright © 2010-2022 three.js authors — 3D rendering</td></tr>
+          <tr><td>occt-import-js</td><td>LGPL-2.1</td><td>Viktor Kovács and contributors — STEP reading (WASM). The library ships as separate, replaceable files (resources/app.asar.unpacked/node_modules/occt-import-js); source code: github.com/kovacsv/occt-import-js. Licence text: renderer/viewer/lib/license.occt-import-js.txt</td></tr>
+          <tr><td>Open CASCADE Technology</td><td>LGPL-2.1 + OCCT exception</td><td>Copyright (c) Open CASCADE SAS — inside occt-import-js. Licence text: renderer/viewer/lib/license.occt.txt</td></tr>
+          <tr><td>DejaVu Sans</td><td>Bitstream Vera / Arev / public domain</td><td>Copyright (c) 2003 Bitstream, Inc.; DejaVu changes are in the public domain — licence text: renderer/fonts/LICENSE-DejaVu.txt</td></tr>
+        </tbody>
+      </table>
+      <h3>MIT License</h3>
+      <p class="legal">Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+    </article>
+  </main>
+
+  <div id="modal-root"></div>
+  <div id="busy" class="busy" hidden role="status" aria-live="polite">
+    <div class="busy-card"><div class="spinner" aria-hidden="true"></div><p id="busy-text"></p></div>
+  </div>
+  <div id="toasts" role="status" aria-live="polite" aria-relevant="additions"></div>
+  <script src="../../i18n/i18n.js"></script>
+  <script src="home.js"></script>
+</body>
+</html>
